@@ -1,0 +1,59 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  IMAGE_TAG: formlabs-app:latest
+
+build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+  only:
+    - main
+
+test:
+  stage: test
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker build --target tester .
+    - docker create --name test_container $IMAGE_TAG
+    - docker cp test_container:/app/test-results/junit.xml ./junit.xml
+    - docker rm test_container
+  artifacts:
+    reports:
+      junit: junit.xml
+  only:
+    - main
+
+deploy:
+  stage: deploy
+  image:
+    name: alpine/helm:3.13.0
+    entrypoint: [""]
+  variables:
+    KUBECONFIG: ~/.kube/config
+  script:
+    - echo "Configuring Kubernetes access..."
+    - mkdir -p ~/.kube
+    - echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config
+    - chmod 600 ~/.kube/config
+    - echo "Deploying to Kubernetes using Helm..."
+    - helm upgrade --install formlabs-release ./formlabs-chart
+      --namespace $KUBE_NAMESPACE
+      --create-namespace
+      --set image.repository=$CI_REGISTRY_IMAGE
+      --set image.tag=$CI_COMMIT_SHA
+      --wait
+      --timeout 5m
+  when: manual
+  only:
+    - main
