@@ -1,0 +1,35 @@
+---
+- name: Build and deploy Flask application
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    app_name: formlabs-app
+    docker_tag: latest
+    helm_release: formlabs-release
+    helm_chart: ./formlabs-chart
+
+  tasks:
+    - name: Build Docker image (includes running tests)
+      community.docker.docker_image:
+        name: "{{ app_name }}"
+        tag: "{{ docker_tag }}"
+        source: build
+        build:
+          path: .
+          pull: yes
+        state: present
+        force_source: yes
+      register: build_result
+
+    - name: Deploy to Kubernetes using Helm
+      kubernetes.core.helm:
+        name: "{{ helm_release }}"
+        chart_ref: "{{ helm_chart }}"
+        release_namespace: default
+        create_namespace: true
+        values:
+          image:
+            repository: "{{ app_name }}"
+            tag: "{{ docker_tag }}"
+      when: build_result is success
