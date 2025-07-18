@@ -1,0 +1,11 @@
+replicaCount: 1
+
+image:
+  repository: formlabs-app
+  tag: "latest"
+  pullPolicy: Never # Use 'Never' for local development
+
+service:
+  type: NodePort # using NodePort to access the app without an Ingress
+  port: 81       # The port the service will be available on
+  targetPort: 8080
