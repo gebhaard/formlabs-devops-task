@@ -1,0 +1,57 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# CI/CD
+.gitlab-ci.yml
+
+# Kubernetes & Helm
+formlabs-chart/
+kubernetes/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.env
+.venv
+env/
+venv/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+test-results/
+junit.xml
+
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ansible
+ansible.cfg
+inventory
+*.retry
+deploy.yml
+
+# Documentation
+README.md
+LICENSE
+
+# Docker
+.dockerignore
+
+# Shell scripts that are copied and executed within container
+!run.sh
+!test.sh
