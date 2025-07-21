@@ -1,4 +1,4 @@
-FROM python:3.13-slim AS builder
+FROM python:3.12-slim AS builder
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 COPY requirements.txt requirements.txt
@@ -11,7 +11,7 @@ FROM builder AS tester
 COPY . .
 RUN python -m unittest helloapp.test -v
 
-FROM python:3.13-slim AS runtime
+FROM python:3.12-slim AS runtime
 
 RUN useradd --create-home appuser
 WORKDIR /home/appuser
