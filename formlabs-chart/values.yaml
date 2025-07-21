@@ -6,6 +6,6 @@ image:
   pullPolicy: Never # Use 'Never' for local development
 
 service:
-  type: NodePort # using NodePort to access the app without an Ingress
-  port: 81       # The port the service will be available on
+  type: LoadBalancer
+  port: 81
   targetPort: 8080
