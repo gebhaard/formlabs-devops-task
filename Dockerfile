@@ -16,7 +16,7 @@ FROM python:3.12-slim AS runtime
 RUN useradd --create-home appuser
 WORKDIR /home/appuser
 
-COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY helloapp helloapp
 
 
