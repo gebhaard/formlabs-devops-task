@@ -1,11 +1,16 @@
+# Pipeline stages in order of execution
 stages:
   - build
   - test
   - deploy
 
+# Global variables available to all jobs
+# Using generic tag for local development
 variables:
   IMAGE_TAG: formlabs-app:latest
 
+# Build Stage
+# Using Docker-in-Docker (DinD) for container builds
 build:
   stage: build
   image: docker:latest
@@ -16,36 +21,45 @@ build:
     - docker build -t $IMAGE_TAG .
     - docker push $IMAGE_TAG
   only:
-    - main
+    - main  # Only run on main branch to avoid redundant builds
 
+# Test Stage
+# Leveraging multi-stage Dockerfile's test stage
 test:
   stage: test
   image: docker:latest
   services:
     - docker:dind
   script:
-    - docker build --target tester .
+    - docker build --target tester .  # Use dedicated test stage
     - docker create --name test_container $IMAGE_TAG
     - docker cp test_container:/app/test-results/junit.xml ./junit.xml
     - docker rm test_container
   artifacts:
     reports:
-      junit: junit.xml
+      junit: junit.xml  # Store test results for GitLab UI
   only:
     - main
 
+# Deploy Stage
+# Using Helm for Kubernetes deployments
 deploy:
   stage: deploy
   image:
-    name: alpine/helm:3.13.0
+    name: alpine/helm:3.13.0  # Lightweight Helm image
     entrypoint: [""]
   variables:
     KUBECONFIG: ~/.kube/config
   script:
+    # Secure handling of Kubernetes credentials
     - echo "Configuring Kubernetes access..."
     - mkdir -p ~/.kube
     - echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config
-    - chmod 600 ~/.kube/config
+    - chmod 600 ~/.kube/config  # Secure config file permissions
+    # Helm deployment with safety features:
+    # - --wait ensures successful rollout
+    # - --timeout prevents indefinite hanging
+    # - --create-namespace for first deployment
     - echo "Deploying to Kubernetes using Helm..."
     - helm upgrade --install formlabs-release ./formlabs-chart
       --namespace $KUBE_NAMESPACE
@@ -54,6 +68,6 @@ deploy:
       --set image.tag=$CI_COMMIT_SHA
       --wait
       --timeout 5m
-  when: manual
+  when: manual  # Manual deployment for safety
   only:
-    - main
+    - main    # Production deployments from main branch only

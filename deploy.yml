@@ -1,8 +1,12 @@
+# This playbook automates the build and deployment process for the Flask application
 ---
 - name: Build and deploy Flask application
+  # Using localhost for simplified deployment - alternatively could use remote hosts
   hosts: localhost
   connection: local
   gather_facts: false
+  
+  # Variables defined here instead of vars/ directory for simplicity
   vars:
     app_name: formlabs-app
     docker_tag: latest
@@ -17,9 +21,9 @@
         source: build
         build:
           path: .
-          pull: yes
+          pull: yes  # Always pull latest base images for security
         state: present
-        force_source: yes
+        force_source: yes  # Ensure rebuild even if image exists
       register: build_result
 
     - name: Deploy to Kubernetes using Helm
@@ -32,4 +36,5 @@
           image:
             repository: "{{ app_name }}"
             tag: "{{ docker_tag }}"
+      # Only deploy if build succeeds, maintaining system integrity
       when: build_result is success
